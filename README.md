@@ -33,5 +33,5 @@
 
 ## Links
 - [![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?logo=linkedin)](https://www.linkedin.com/in/henry-eckhause-3826aa384/)
-- Email: [henryeckhause@cornell.edu](mailto:henryeckhause@cornell.edu)
-- Resume: [![Resume](https://img.shields.io/badge/Resume-PDF-red)](./HenryEckhause.pdf)
+- [![Email](https://img.shields.io/badge/Email-grey?logo=gmail)](mailto:henryeckhause@cornell.edu)
+- [![Resume](https://img.shields.io/badge/Resume-PDF-red)](./HenryEckhause.pdf)
