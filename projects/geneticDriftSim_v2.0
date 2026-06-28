@@ -14,7 +14,6 @@ class Person:
         self._gender = random.randint(0, 1)
         self._age = 0
         if parm is None and parf is None:
-            # Using random.random() for clean allele assignment
             self._allele1 = "A" if random.random() < af1 else "a"
             self._allele2 = "A" if random.random() < af1 else "a"
         else:
@@ -48,6 +47,7 @@ class SimulationApp:
         self.lif_var = tk.StringVar(value="4.0")
         self.kid_var = tk.StringVar(value="2.1")
         self.cc_var = tk.StringVar(value="200")
+        self.fc_var = tk.StringVar(value="1.0")
 
         # Render input fields dynamically
         fields = [
@@ -58,6 +58,7 @@ class SimulationApp:
             ("Avg Life Expectancy (Gen):", self.lif_var),
             ("Avg Kids per Female:", self.kid_var),
             ("Carrying Capacity:", self.cc_var),
+            ("Fitness Coefficient of 'aa' (0-1):", self.fc_var),
         ]
 
         for idx, (label_text, var) in enumerate(fields):
@@ -70,7 +71,7 @@ class SimulationApp:
         self.run_btn = ttk.Button(
             control_frame, text="Run Simulation", command=self.start_simulation
         )
-        self.run_btn.grid(row=15, column=0, pady=(15, 5), sticky="ew")
+        self.run_btn.grid(row=17, column=0, pady=(15, 5), sticky="ew")
 
         # Status text element
         self.status_lbl = ttk.Label(
@@ -102,6 +103,7 @@ class SimulationApp:
             lif = float(self.lif_var.get())
             kid = float(self.kid_var.get())
             cc = int(self.cc_var.get())
+            fc = float(self.fc_var.get())
         except ValueError:
             messagebox.showerror("Input Error", "Please enter valid numeric fields.")
             return
@@ -112,9 +114,17 @@ class SimulationApp:
             )
             return
 
-        if pop <= 0 or gen <= 0 or numsim <= 0 or cc <= 0 or lif <= 0 or kid < 0:
+        if (
+            pop <= 0
+            or gen <= 0
+            or numsim <= 0
+            or cc <= 0
+            or lif <= 0
+            or kid < 0
+            or fc < 0
+        ):
             messagebox.showerror(
-                "Input Error", "Numeric values must be greater than 0."
+                "Input Error", "Numeric values must be greater than or equal to 0."
             )
             return
 
@@ -122,13 +132,13 @@ class SimulationApp:
         self.run_btn.config(state="disabled")
         self.status_lbl.config(text="Status: Simulating... please wait.")
 
-        # Run backend code logic in a non-blocking background thread
-        sim_args = (pop, af1, gen, numsim, lif, kid, cc)
+        # --- FIX: Added 'fc' to the tuple below ---
+        sim_args = (pop, af1, gen, numsim, lif, kid, cc, fc)
         threading.Thread(
             target=self.run_simulation_logic, args=sim_args, daemon=True
         ).start()
 
-    def run_simulation_logic(self, pop, af1, gen, numsim, lif, kid, cc):
+    def run_simulation_logic(self, pop, af1, gen, numsim, lif, kid, cc, fc):
         """Processes simulation mathematical computations."""
         self.ax.clear()
         self.ax.set_title("Allele A Frequency Over Time")
@@ -160,10 +170,12 @@ class SimulationApp:
                     # Females breed exactly at generation index age 2 if males exist
                     if j._gender == 0 and j._age == 2 and males:
                         guy = random.choice(males)
-                        rand2 = random.uniform(0, kid * 2)
+                        if j._allele1 == "a" and j._allele2 == "a":
+                            rand2 = random.uniform(0, kid * 2 * fc)
+                        else:
+                            rand2 = random.uniform(0, kid * 2)
                         for _ in range(round(rand2)):
                             new_population.append(Person(guy, j, af1))
-
                 # Handle Environmental Carrying Capacity Cap
                 if len(new_population) > cc:
                     new_population = new_population[-cc:]
@@ -187,7 +199,6 @@ class SimulationApp:
                 total_alleles = 2 * (homd + het + homr)
                 freq_A = (homd * 2 + het) / total_alleles if total_alleles > 0 else 0
                 history.append(freq_A)
-
             # Map calculated lineage pathway safely to chart line
             self.ax.plot(history, label=f"Trial {g+1}")
 
